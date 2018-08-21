@@ -1,0 +1,36 @@
+! Configuration File for keepalived
+global_defs {
+    router_id nginx_server_1
+}
+vrrp_script chk_nginx {
+    script "/root/keepalived/nginx_check.sh"
+    interval 2
+    weight 20
+    !weight为正数
+    !如果脚本执行结果为0,,Master:weight+priority>Backup:weight+priority(不切换)
+    !如果脚本执行结果不为0,Master:priority<Backup:priority+weight(切换)
+    !weight为负数
+    !如果脚本执行结果为0,,Master:priority>Backup:priority(不切换)
+    !如果脚本执行结果不为0,Master:priority+weight<Backup:priority(切换)
+    !一般来说,weight的绝对值要大于Master和Backup的priority之差
+}
+vrrp_instance VI_1 {
+    state MASTER
+    interface enp0s3
+    virtual_router_id 51
+    mcast_src_ip 192.168.1.107
+    priority 100
+    nopreempt
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    track_script {
+        chk_nginx
+    }
+    virtual_ipaddress {
+        192.168.1.219/24
+    }
+}
+
